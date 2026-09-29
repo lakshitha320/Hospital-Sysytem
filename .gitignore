@@ -6,3 +6,6 @@ dist/
 frontend/dist/
 .DS_Store
 *.log
+test-token.js
+github-upload.js
+git-push-fix.js
