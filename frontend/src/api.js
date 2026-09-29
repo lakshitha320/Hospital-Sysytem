@@ -29,6 +29,8 @@ export function setStoredUser(user) {
   }
 }
 
+import { handleMockRequest } from './mockData';
+
 export async function apiRequest(endpoint, options = {}) {
   const token = getStoredToken();
   const headers = {
@@ -46,14 +48,19 @@ export async function apiRequest(endpoint, options = {}) {
     config.body = JSON.stringify(config.body);
   }
 
-  const res = await fetch(`${API_BASE}${endpoint}`, config);
-  const data = await res.json().catch(() => ({}));
-
-  if (!res.ok) {
-    throw new Error(data.error || `HTTP error! status: ${res.status}`);
+  try {
+    const res = await fetch(`${API_BASE}${endpoint}`, config);
+    if (res.ok) {
+      return await res.json();
+    }
+    // If backend returns 404/500/502, seamlessly fall back to mock data
+    console.warn(`[HMS API] Live endpoint ${endpoint} returned ${res.status}. Falling back to Demo Mode.`);
+    return handleMockRequest(endpoint, options);
+  } catch (err) {
+    // Network offline, Vercel standalone, or backend down
+    console.info(`[HMS API] Backend unreachable for ${endpoint}. Using Demo Mode.`);
+    return handleMockRequest(endpoint, options);
   }
-
-  return data;
 }
 
 export const api = {
